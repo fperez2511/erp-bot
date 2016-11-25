@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -16,7 +17,8 @@ namespace dx.acumatica.bot.app.Services
 
         public async Task<string> GetOpportunities(OpportunitiesRequestModel model)
         {
-            var uri = new Uri("http://localhost:3979/api/opportunities?" + GetQueryString(model));
+            var uriBase = ConfigurationManager.AppSettings["opportunityAPI"];
+            var uri = new Uri(uriBase + "?" + GetQueryString(model));
            
 
             var result = await Client.GetAsync(uri);
