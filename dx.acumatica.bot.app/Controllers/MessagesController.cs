@@ -3,9 +3,13 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Description;
+using Autofac;
+using Microsoft.Bot.Builder.Dialogs.Internals;
+using Microsoft.Bot.Builder.Internals.Fibers;
 using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -15,46 +19,32 @@ namespace dx.acumatica.bot.app
     [BotAuthentication]
     public class MessagesController : ApiController
     {
-        /// <summary>
-        /// POST: api/Messages
-        /// Receive a message from a user and reply to it
-        /// </summary>
-        public async Task<HttpResponseMessage> Post([FromBody]Activity activity)
+        private readonly ILifetimeScope scope;
+        public MessagesController(ILifetimeScope scope)
         {
-            if (activity.Type == ActivityTypes.Message)
-            {
-                ConnectorClient connector = new ConnectorClient(new Uri(activity.ServiceUrl));
-                // calculate something for us to return
-                int length = (activity.Text ?? string.Empty).Length;
-
-                // return our reply to the user
-                // Activity reply = activity.CreateReply($"You sent {activity.Text} which was {length} characters");
-                Activity reply = activity.CreateReply(await GetOpportunities());
-
-                await connector.Conversations.ReplyToActivityAsync(reply);
-            }
-            else
-            {
-                HandleSystemMessage(activity);
-            }
-            var response = Request.CreateResponse(HttpStatusCode.OK);
-            return response;
+            SetField.NotNull(out this.scope, nameof(scope), scope);
         }
-        private static HttpClient Client = new HttpClient();
-        public async Task<string> GetOpportunities()
+        public async Task<HttpResponseMessage> Post([FromBody] Activity activity, CancellationToken token)
         {
-            var result = await Client.GetAsync("http://localhost:3979/api/opportunities");
-            var stringbuilder = new StringBuilder();
-            var content = await result.Content.ReadAsStringAsync();
-            var obj = JArray.Parse(content);
-
-            foreach (var o in obj)
+            if (activity != null)
             {
-                stringbuilder.AppendFormat(" * {0} from {1} for {2}, estimated by {3}\r\n", o["Subject"], o["BusinessAccount"],
-                    o["Total"], o["Estimation"]);
+                switch (activity.GetActivityType())
+                {
+                    case ActivityTypes.Message:
+                        using (var scope = DialogModule.BeginLifetimeScope(this.scope, activity))
+                        {
+                            var postToBot = scope.Resolve<IPostToBot>();
+                            await postToBot.PostAsync(activity, token);
+                        }
+
+                        break;
+                }
             }
-            return stringbuilder.ToString();
+
+            return new HttpResponseMessage(HttpStatusCode.Accepted);
         }
+
+
 
         private Activity HandleSystemMessage(Activity message)
         {
