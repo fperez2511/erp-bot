@@ -15,6 +15,7 @@ namespace dx.acumatica.bot.app.Models
 
         public double Amount { get; set; }
         public bool GreaterOrLessThan { get; set; }
+        public string Message { get; set; }
     }
 
     public enum OpportunitiesIntents
@@ -22,5 +23,11 @@ namespace dx.acumatica.bot.app.Models
         OppsByAccountName,
         OppsByTotal,
         OppsByEstimate
+    }
+
+    public class ServiceModel
+    {
+        public string Message { get; set; }
+        public string DebugMessage { get; set; }
     }
 }

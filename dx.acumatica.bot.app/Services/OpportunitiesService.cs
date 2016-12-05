@@ -15,7 +15,7 @@ namespace dx.acumatica.bot.app.Services
     {
         private static readonly HttpClient Client = new HttpClient();
 
-        public async Task<string> GetOpportunities(OpportunitiesRequestModel model)
+        public async Task<ServiceModel> GetOpportunities(OpportunitiesRequestModel model)
         {
             var uriBase = ConfigurationManager.AppSettings["opportunityAPI"];
             var uri = new Uri(uriBase + "?" + GetQueryString(model));
@@ -26,13 +26,21 @@ namespace dx.acumatica.bot.app.Services
             var content = await result.Content.ReadAsStringAsync();
             var obj = JArray.Parse(content);
 
+            stringbuilder.AppendLine(model.Message);
             foreach (var o in obj)
             {
                 stringbuilder.Append(
-                    $" * {o["Subject"]} from {o["BusinessAccount"]} for {o["Total"]}, estimated by {o["Estimation"]}\r\n");
+                    $" * {o["Subject"]} from {o["BusinessAccount"]} for {Convert.ToDouble(o["Total"]).ToString("c0")}, estimated by {o["Estimation"]}\r\n");
             }
-            stringbuilder.AppendLine(JsonConvert.SerializeObject(model));
-            return stringbuilder.ToString();
+
+            var debugInfo = new StringBuilder();
+            debugInfo.AppendLine($"DEBUG: Opportunities API RequestOpportunitiesRequestModel: \r\n{JsonConvert.SerializeObject(model)} \r\n");
+            debugInfo.AppendLine($"DEBUG: Opportunities API Url: *{uri}*\r\n");
+            return new ServiceModel
+            {
+                Message = stringbuilder.ToString(),
+                DebugMessage = debugInfo.ToString()
+            };
         }
 
         public string GetQueryString(object obj)

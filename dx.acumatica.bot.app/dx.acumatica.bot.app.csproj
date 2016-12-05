@@ -124,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\WebApiConfig.cs" />
+    <Compile Include="Modules\MemoryCacher.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
     <Compile Include="Controllers\OpportunitiesController.cs" />
     <Compile Include="Dialogs\OpportunitiesDialog.cs" />
@@ -138,6 +139,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
+    <None Include="Properties\PublishProfiles\acumaticabotapp - Web Deploy.pubxml" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

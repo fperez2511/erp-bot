@@ -5,6 +5,6 @@ namespace dx.acumatica.bot.app.Services
 {
     public interface IOpportunitiesService
     {
-        Task<string> GetOpportunities(OpportunitiesRequestModel model);
+        Task<ServiceModel> GetOpportunities(OpportunitiesRequestModel model);
     }
 }

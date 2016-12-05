@@ -5,10 +5,10 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Formatting;
 using System.Net.Http.Headers;
-using System.Runtime.Caching;
 using System.Threading.Tasks;
 using System.Web.Http;
 using dx.acumatica.bot.app.Models;
+using dx.acumatica.bot.app.Modules;
 using dx.acumatica.bot.lib;
 using Newtonsoft.Json;
 
@@ -17,7 +17,7 @@ namespace dx.acumatica.bot.app.Controllers
     [RoutePrefix("api/opportunities")]
     public class OpportunitiesController : ApiController
     {
-        private string cacheKey = "opportunitiesCacheKey";
+        private string cacheKey = "opportunitiesCacheKey1";
         [Route("")]
         [HttpGet]
         public async Task<HttpResponseMessage> Get([FromUri]OpportunitiesRequestModel model)
@@ -46,7 +46,12 @@ namespace dx.acumatica.bot.app.Controllers
             var filteredList = list;
             if (model.Intent == OpportunitiesIntents.OppsByAccountName)
             {
-                filteredList = list.Where(d => Compare(d["BusinessAccount"], model.AccountName)).ToList();
+                filteredList = list.Where(d => CompareAreEqual(d["BusinessAccount"], model.AccountName)).ToList();
+            }
+
+            if (model.Intent == OpportunitiesIntents.OppsByTotal)
+            {
+                filteredList = list.Where(d => CompareIsGgreater(d["Total"], model.Amount, model.GreaterOrLessThan)).ToList();
             }
 
             return new HttpResponseMessage()
@@ -57,33 +62,16 @@ namespace dx.acumatica.bot.app.Controllers
             };
         }
 
-        internal bool Compare(string val1, string val2)
+        internal bool CompareAreEqual(string val1, string val2)
         {
             return val1.Trim().Equals(val2.Trim(), StringComparison.InvariantCultureIgnoreCase);
         }
-    }
 
-    public class MemoryCacher
-    {
-        public object GetValue(string key)
+        internal bool CompareIsGgreater(string val1, double val2, bool isGreater)
         {
-            MemoryCache memoryCache = MemoryCache.Default;
-            return memoryCache.Get(key);
-        }
-
-        public bool Add(string key, object value, DateTimeOffset absExpiration)
-        {
-            MemoryCache memoryCache = MemoryCache.Default;
-            return memoryCache.Add(key, value, absExpiration);
-        }
-
-        public void Delete(string key)
-        {
-            MemoryCache memoryCache = MemoryCache.Default;
-            if (memoryCache.Contains(key))
-            {
-                memoryCache.Remove(key);
-            }
+            var num1 = Convert.ToDouble(val1);
+            var num2 = Convert.ToDouble(val2);
+            return isGreater ? num1 >= num2 : num1 <= num2;
         }
     }
 }

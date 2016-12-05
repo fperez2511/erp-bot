@@ -15,4 +15,16 @@ namespace dx.acumatica.bot.tests.lib
             Assert.IsNotNull(result);
         }
     }
+
+    [TestClass]
+    public class UtilitiesTest
+    {
+        [TestMethod]
+        public void ConvertStringToDateShouldReturnCorrecDateForMonthAndYearString()
+        {
+            var yearAndMonthString = "January 2018";
+            var result = Utilities.ConvertStringToDate(yearAndMonthString, true);
+            Assert.AreEqual(DateTime.Parse("1/1/2018"), result);
+        }
+    }
 }
